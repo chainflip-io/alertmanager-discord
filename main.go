@@ -45,6 +45,7 @@ type alertManOut struct {
 	} `json:"commonAnnotations"`
 	CommonLabels struct {
 		Alertname string `json:"alertname"`
+		Cluster   string `json:"cluster"`
 	} `json:"commonLabels"`
 	ExternalURL string `json:"externalURL"`
 	GroupKey    string `json:"groupKey"`
@@ -123,11 +124,14 @@ func sendWebhook(amo *alertManOut) {
 		}
 
 		if amo.CommonAnnotations.Summary != "" {
-			DO.Content = fmt.Sprintf(" === %s === \n", amo.CommonAnnotations.Summary)
+			DO.Content = fmt.Sprintf("Alerts Triggered: **%s** \n=== %s ===\n", amo.CommonLabels.Cluster, amo.CommonAnnotations.Summary)
 		}
 
 		for _, alert := range alerts {
-			realname := alert.Labels["instance"]
+			realname := fmt.Sprintf("%s (%s)", alert.Labels["cluster"], alert.Labels["instance"])
+			if len(realname) == 0 {
+				realname = alert.Labels["cluster"]
+			}
 			if strings.Contains(realname, "localhost") && alert.Labels["exported_instance"] != "" {
 				realname = alert.Labels["exported_instance"]
 			}
